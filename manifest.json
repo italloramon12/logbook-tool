@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "ActivityTracker Web Companion",
+  "version": "0.1",
+  "description": "Registra abas/URLs e tempo em cada aba (consentimento necessário).",
+  "permissions": [
+    "tabs",
+    "webNavigation",
+    "storage",
+    "activeTab",
+    "http://localhost:5001/*"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  }
+}
