@@ -1,0 +1,13 @@
+[Unit]
+Description=Activity Tracker Agent
+After=network.target
+
+[Service]
+Type=simple
+User=%i
+ExecStart=/usr/bin/python3 /home/%i/activity-tracker/agent/agent.py
+Restart=on-failure
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
