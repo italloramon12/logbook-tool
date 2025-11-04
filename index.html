@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Activity Tracker - Log</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 1rem; }
+    table { width:100%; border-collapse: collapse;}
+    td, th { border: 1px solid #ddd; padding: 8px; }
+    th { background:#f3f3f3; }
+  </style>
+</head>
+<body>
+  <h1>Activity Tracker — Eventos</h1>
+  <button id="refresh">Atualizar</button>
+  <button id="export">Exportar Markdown (dia)</button>
+  <pre id="exportOut" style="white-space: pre-wrap;"></pre>
+  <table id="tbl">
+    <thead><tr><th>Hora</th><th>Tipo</th><th>Título</th><th>Detalhe</th><th>Duração(s)</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+async function load() {
+  const res = await fetch('/api/events');
+  const data = await res.json();
+  const tbody = document.querySelector("#tbl tbody");
+  tbody.innerHTML = "";
+  data.forEach(e => {
+    const tr = document.createElement("tr");
+    const d = new Date(e.ts * 1000).toLocaleString();
+    tr.innerHTML = `<td>${d}</td><td>${e.type}</td><td>${e.title||''}</td><td>${e.detail||''}</td><td>${e.duration||0}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById("refresh").onclick = load;
+document.getElementById("export").onclick = async () => {
+  const r = await fetch('/api/export_markdown');
+  const txt = await r.text();
+  document.getElementById("exportOut").textContent = txt;
+};
+load();
+</script>
+</body>
+</html>
