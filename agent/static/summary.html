@@ -1,0 +1,416 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Resumo Diário - Activity Tracker</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 { 
+      color: #333; 
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .subtitle { 
+      color: #666; 
+      margin-bottom: 2rem; 
+    }
+    
+    .nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 1rem;
+    }
+    
+    .nav a {
+      color: #4A90E2;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      transition: all 0.2s;
+    }
+    
+    .nav a:hover {
+      background: #E3F2FD;
+    }
+    
+    .controls {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    button {
+      background: #4A90E2;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    button:hover { 
+      background: #357ABD; 
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .loading {
+      display: none;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .loading.visible {
+      display: block;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    
+    .card h3 {
+      margin: 0 0 1rem 0;
+      color: #333;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .category-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .category-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+    
+    .category-name {
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+    
+    .category-time {
+      color: #666;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    
+    .color-work { background: #4CAF50; }
+    .color-communication { background: #2196F3; }
+    .color-entertainment { background: #FF9800; }
+    .color-productivity { background: #9C27B0; }
+    .color-social_media { background: #E91E63; }
+    .color-development { background: #00BCD4; }
+    .color-idle { background: #9E9E9E; }
+    .color-other { background: #607D8B; }
+    
+    .summary-content {
+      background: #f8f9fa;
+      padding: 2rem;
+      border-radius: 8px;
+      line-height: 1.8;
+      min-height: 400px;
+    }
+    
+    .summary-content h1,
+    .summary-content h2,
+    .summary-content h3 {
+      color: #333;
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .summary-content h1 {
+      font-size: 28px;
+      margin-top: 0;
+    }
+    
+    .summary-content ul {
+      padding-left: 1.5rem;
+    }
+    
+    .summary-content li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .score-badge {
+      display: inline-block;
+      font-size: 48px;
+      font-weight: bold;
+      color: #4A90E2;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .top-activities {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .top-activities li {
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .activity-name {
+      font-weight: 500;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .activity-time {
+      color: #4A90E2;
+      font-weight: bold;
+      margin-left: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Resumo Diário</h1>
+    <p class="subtitle">Análise inteligente das suas atividades</p>
+    
+    <div class="nav">
+      <a href="/">🏠 Dashboard Principal</a>
+      <a href="/summary.html">📈 Resumo Diário</a>
+    </div>
+    
+    <div class="controls">
+      <button id="generateBtn">
+        🤖 Gerar Resumo com IA
+      </button>
+      <button id="refreshBtn">
+        🔄 Atualizar Categorias
+      </button>
+      <span class="loading" id="loading">Gerando resumo...</span>
+    </div>
+    
+    <div class="grid">
+      <div class="card">
+        <h3>📂 Categorias</h3>
+        <div class="category-bar" id="categories"></div>
+      </div>
+      
+      <div class="card">
+        <h3>🏆 Top Atividades</h3>
+        <ul class="top-activities" id="topActivities"></ul>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>🤖 Resumo Inteligente</h3>
+      <div class="summary-content" id="summaryContent">
+        <p style="color: #666; text-align: center; padding: 3rem 0;">
+          Clique em "Gerar Resumo com IA" para obter uma análise detalhada do seu dia.
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+// Marked.js simplificado para renderizar markdown
+function simpleMarkdown(text) {
+  return text
+    // Headers
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Lists
+    .replace(/^\- (.+)$/gim, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    // Line breaks
+    .replace(/\n/g, '<br>');
+}
+
+function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else {
+    return `${minutes}m`;
+  }
+}
+
+async function loadCategories() {
+  try {
+    const res = await fetch('/api/categories');
+    const data = await res.json();
+    
+    const container = document.getElementById('categories');
+    container.innerHTML = '';
+    
+    // Calcula total para porcentagens
+    const total = Object.values(data).reduce((sum, cat) => sum + cat.time, 0);
+    
+    // Ordena por tempo
+    const sorted = Object.entries(data)
+      .filter(([_, cat]) => cat.time > 0)
+      .sort((a, b) => b[1].time - a[1].time);
+    
+    sorted.forEach(([name, cat]) => {
+      const percentage = total > 0 ? (cat.time / total * 100) : 0;
+      const item = document.createElement('div');
+      item.className = 'category-item';
+      item.innerHTML = `
+        <div class="category-header">
+          <span class="category-name">${name.replace('_', ' ')}</span>
+          <span class="category-time">${formatDuration(cat.time)} (${percentage.toFixed(1)}%)</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill color-${name}" style="width: ${percentage}%"></div>
+        </div>
+      `;
+      container.appendChild(item);
+    });
+  } catch (error) {
+    console.error('Error loading categories:', error);
+  }
+}
+
+async function loadTopActivities() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    
+    const list = document.getElementById('topActivities');
+    list.innerHTML = '';
+    
+    data.top_activities.slice(0, 5).forEach((activity, index) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="activity-name">${index + 1}. ${activity.title}</span>
+        <span class="activity-time">${formatDuration(activity.seconds)}</span>
+      `;
+      list.appendChild(li);
+    });
+  } catch (error) {
+    console.error('Error loading activities:', error);
+  }
+}
+
+async function generateSummary() {
+  const btn = document.getElementById('generateBtn');
+  const loading = document.getElementById('loading');
+  const content = document.getElementById('summaryContent');
+  
+  btn.disabled = true;
+  loading.classList.add('visible');
+  content.innerHTML = '<p style="color: #666; text-align: center; padding: 3rem 0;">⏳ Gerando resumo inteligente...</p>';
+  
+  try {
+    const res = await fetch('/api/summary?ollama=true');
+    const markdown = await res.text();
+    
+    // Renderiza markdown
+    content.innerHTML = simpleMarkdown(markdown);
+    
+  } catch (error) {
+    console.error('Error generating summary:', error);
+    content.innerHTML = `
+      <p style="color: #e74c3c; text-align: center;">
+        ❌ Erro ao gerar resumo. Certifique-se de que o Ollama está instalado e rodando.<br>
+        <small>Execute: <code>curl http://localhost:11434</code> para verificar.</small>
+      </p>
+    `;
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('visible');
+  }
+}
+
+// Event listeners
+document.getElementById('generateBtn').onclick = generateSummary;
+document.getElementById('refreshBtn').onclick = () => {
+  loadCategories();
+  loadTopActivities();
+};
+
+// Carrega dados iniciais
+loadCategories();
+loadTopActivities();
+</script>
+</body>
+</html>

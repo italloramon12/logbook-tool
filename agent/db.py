@@ -44,6 +44,14 @@ def insert_event(ts, typ, title=None, detail=None, duration=0):
         )
         return c.lastrowid
 
+def update_last_event_duration(event_id, duration):
+    """Atualiza a duração de um evento existente"""
+    with conn() as c:
+        c.execute(
+            "UPDATE events SET duration = ? WHERE id = ?",
+            (int(duration), event_id)
+        )
+
 def fetch_events(start_ts=None, end_ts=None, limit=1000):
     q = "SELECT id, ts, type, title, detail, duration FROM events"
     params = []

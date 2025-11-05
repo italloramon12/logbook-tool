@@ -1,0 +1,256 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Activity Tracker - Logbook</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    h1 { color: #333; margin-bottom: 0.5rem; }
+    .subtitle { color: #666; margin-bottom: 2rem; }
+    
+    .controls {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    button {
+      background: #4A90E2;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 0.5rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #357ABD; }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card h3 {
+      margin: 0 0 0.5rem 0;
+      color: #666;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+    
+    .stat-card .value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #4A90E2;
+    }
+    
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    table { 
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th {
+      background: #f8f9fa;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .type-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .type-window { background: #E3F2FD; color: #1976D2; }
+    .type-website { background: #E8F5E9; color: #388E3C; }
+    .type-terminal { background: #FFF3E0; color: #F57C00; }
+    .type-idle { background: #F3E5F5; color: #7B1FA2; }
+    
+    pre#exportOut {
+      white-space: pre-wrap;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 5px;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    pre#exportOut.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Activity Tracker</h1>
+  <p class="subtitle">Monitoramento de atividades do sistema</p>
+  
+  <div class="controls">
+    <button id="refresh">🔄 Atualizar</button>
+    <button id="summaryBtn" onclick="window.location.href='/summary.html'">🤖 Ver Resumo Diário</button>
+    <button id="export">📄 Exportar Markdown</button>
+    <button id="statsBtn">📈 Atualizar Estatísticas</button>
+  </div>
+  
+  <div class="stats" id="stats">
+    <div class="stat-card">
+      <h3>Tempo Total</h3>
+      <div class="value" id="totalTime">--</div>
+    </div>
+    <div class="stat-card">
+      <h3>Janelas</h3>
+      <div class="value" id="windowTime">--</div>
+    </div>
+    <div class="stat-card">
+      <h3>Websites</h3>
+      <div class="value" id="websiteTime">--</div>
+    </div>
+    <div class="stat-card">
+      <h3>Terminal</h3>
+      <div class="value" id="terminalTime">--</div>
+    </div>
+  </div>
+  
+  <pre id="exportOut"></pre>
+  
+  <div class="table-container">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Tipo</th>
+          <th>Título</th>
+          <th>Detalhe</th>
+          <th>Duração</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${secs}s`;
+  } else {
+    return `${secs}s`;
+  }
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    
+    document.getElementById('totalTime').textContent = formatDuration(data.total_seconds);
+    document.getElementById('windowTime').textContent = formatDuration(data.by_type.window || 0);
+    document.getElementById('websiteTime').textContent = formatDuration(data.by_type.website || 0);
+    document.getElementById('terminalTime').textContent = formatDuration(data.by_type.terminal || 0);
+  } catch (error) {
+    console.error('Error loading stats:', error);
+  }
+}
+
+async function loadEvents() {
+  try {
+    const res = await fetch('/api/events');
+    const data = await res.json();
+    const tbody = document.querySelector("#tbl tbody");
+    tbody.innerHTML = "";
+    
+    data.reverse().forEach(e => {
+      const tr = document.createElement("tr");
+      const d = new Date(e.ts * 1000).toLocaleString('pt-BR');
+      const typeClass = `type-${e.type}`;
+      
+      tr.innerHTML = `
+        <td>${d}</td>
+        <td><span class="type-badge ${typeClass}">${e.type}</span></td>
+        <td>${e.title || ''}</td>
+        <td style="font-size: 12px; color: #666;">${e.detail || ''}</td>
+        <td><strong>${formatDuration(e.duration || 0)}</strong></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error('Error loading events:', error);
+  }
+}
+
+document.getElementById("refresh").onclick = () => {
+  loadEvents();
+  loadStats();
+};
+
+document.getElementById("statsBtn").onclick = loadStats;
+
+document.getElementById("export").onclick = async () => {
+  try {
+    const r = await fetch('/api/export_markdown');
+    const txt = await r.text();
+    const exportOut = document.getElementById("exportOut");
+    exportOut.textContent = txt;
+    exportOut.classList.add('visible');
+  } catch (error) {
+    console.error('Error exporting:', error);
+  }
+};
+
+// Carrega dados ao iniciar
+loadStats();
+loadEvents();
+
+// Auto-refresh a cada 30 segundos
+setInterval(() => {
+  loadEvents();
+  loadStats();
+}, 30000);
+</script>
+</body>
+</html>

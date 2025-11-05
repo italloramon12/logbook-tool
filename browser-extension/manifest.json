@@ -1,0 +1,43 @@
+{
+  "manifest_version": 2,
+  "name": "ActivityTracker Web Companion",
+  "version": "0.3",
+  "description": "Registra abas/URLs, tempo em cada aba e inputs em sites específicos para o Activity Tracker.",
+  "permissions": [
+    "tabs",
+    "webNavigation",
+    "storage",
+    "activeTab",
+    "http://localhost:5001/*"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://web.whatsapp.com/*",
+        "*://web.telegram.org/*",
+        "*://discord.com/*",
+        "*://*.slack.com/*",
+        "*://www.facebook.com/*",
+        "*://twitter.com/*",
+        "*://x.com/*",
+        "*://www.instagram.com/*",
+        "*://www.linkedin.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_action": {
+    "default_icon": {
+      "48": "icon.png"
+    },
+    "default_title": "ActivityTracker"
+  },
+  "icons": {
+    "48": "icon.png"
+  }
+}
