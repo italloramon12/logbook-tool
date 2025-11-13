@@ -6,10 +6,13 @@ let lastInputTime = Date.now();
 const INPUT_SAVE_DELAY = 5000; // 5 segundos sem digitar para salvar
 const MIN_INPUT_LENGTH = 10; // mínimo de caracteres
 
+// Compatibilidade Chrome/Firefox
+const browserAPI = typeof chrome !== 'undefined' ? chrome : browser;
+
 // Envia dados ao background
 function sendToBackground(type, data) {
   try {
-    browser.runtime.sendMessage({
+    browserAPI.runtime.sendMessage({
       action: 'logInput',
       type: type,
       data: data

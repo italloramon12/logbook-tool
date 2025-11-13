@@ -77,26 +77,6 @@ RestartSec=10
 WantedBy=default.target
 EOF
 
-# Cria o arquivo de serviço do keyboard monitor
-cat > "$INSTALL_DIR/activity-tracker-keyboard.service" << EOF
-[Unit]
-Description=Activity Tracker Keyboard Monitor
-After=graphical.target
-
-[Service]
-Type=simple
-User=$USER
-WorkingDirectory=$INSTALL_DIR/agent
-Environment=DISPLAY=:0
-Environment=XAUTHORITY=$HOME/.Xauthority
-ExecStart=$INSTALL_DIR/venv/bin/python3 $INSTALL_DIR/agent/keyboard_monitor.py
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=default.target
-EOF
-
 # Cria o arquivo de serviço da API
 cat > "$INSTALL_DIR/activity-tracker-api.service" << EOF
 [Unit]
@@ -118,7 +98,6 @@ EOF
 # Copia para systemd user
 mkdir -p "$HOME/.config/systemd/user"
 cp "$INSTALL_DIR/activity-tracker-agent.service" "$HOME/.config/systemd/user/"
-cp "$INSTALL_DIR/activity-tracker-keyboard.service" "$HOME/.config/systemd/user/"
 cp "$INSTALL_DIR/activity-tracker-api.service" "$HOME/.config/systemd/user/"
 
 # Recarrega systemd
@@ -155,11 +134,9 @@ cat > "$INSTALL_DIR/start.sh" << 'EOF'
 #!/bin/bash
 echo "🚀 Iniciando Activity Tracker..."
 systemctl --user start activity-tracker-agent.service
-systemctl --user start activity-tracker-keyboard.service
 systemctl --user start activity-tracker-api.service
 echo "✓ Serviços iniciados"
 echo "📊 Dashboard: http://localhost:5001"
-echo "🤖 Resumo Diário: http://localhost:5001/summary.html"
 EOF
 chmod +x "$INSTALL_DIR/start.sh"
 
@@ -168,7 +145,6 @@ cat > "$INSTALL_DIR/stop.sh" << 'EOF'
 #!/bin/bash
 echo "🛑 Parando Activity Tracker..."
 systemctl --user stop activity-tracker-agent.service
-systemctl --user stop activity-tracker-keyboard.service
 systemctl --user stop activity-tracker-api.service
 echo "✓ Serviços parados"
 EOF
@@ -182,9 +158,6 @@ echo ""
 echo "Agent:"
 systemctl --user status activity-tracker-agent.service --no-pager | head -n 3
 echo ""
-echo "Keyboard Monitor:"
-systemctl --user status activity-tracker-keyboard.service --no-pager | head -n 3
-echo ""
 echo "API:"
 systemctl --user status activity-tracker-api.service --no-pager | head -n 3
 EOF
@@ -195,29 +168,16 @@ cat > "$INSTALL_DIR/logs.sh" << 'EOF'
 #!/bin/bash
 if [ "$1" == "agent" ]; then
     journalctl --user -u activity-tracker-agent.service -f
-elif [ "$1" == "keyboard" ]; then
-    journalctl --user -u activity-tracker-keyboard.service -f
 elif [ "$1" == "api" ]; then
     journalctl --user -u activity-tracker-api.service -f
 else
     echo "Logs disponíveis em:"
     echo "  - Agent: $HOME/.activity_tracker/agent.log"
     echo "  - Systemd Agent: journalctl --user -u activity-tracker-agent.service -f"
-    echo "  - Systemd Keyboard: journalctl --user -u activity-tracker-keyboard.service -f"
     echo "  - Systemd API: journalctl --user -u activity-tracker-api.service -f"
 fi
 EOF
 chmod +x "$INSTALL_DIR/logs.sh"
-
-# Script para gerar resumo diário
-cat > "$INSTALL_DIR/generate-summary.sh" << 'EOF'
-#!/bin/bash
-echo "🤖 Gerando resumo do dia..."
-cd "$HOME/activity-tracker/agent"
-source "$HOME/activity-tracker/venv/bin/activate"
-python3 ai_summarizer.py
-EOF
-chmod +x "$INSTALL_DIR/generate-summary.sh"
 
 echo ""
 echo -e "${GREEN}=================================="
@@ -228,7 +188,6 @@ echo "📝 Próximos passos:"
 echo ""
 echo "1. Ativar serviços no login:"
 echo "   systemctl --user enable activity-tracker-agent.service"
-echo "   systemctl --user enable activity-tracker-keyboard.service"
 echo "   systemctl --user enable activity-tracker-api.service"
 echo ""
 echo "2. Iniciar agora:"
@@ -240,27 +199,13 @@ echo ""
 echo "4. Acessar dashboard:"
 echo "   http://localhost:5001"
 echo ""
-echo "5. Acessar resumo diário com IA:"
-echo "   http://localhost:5001/summary.html"
-echo ""
-echo "6. Instalar Ollama (para resumos com IA local):"
-echo "   curl https://ollama.ai/install.sh | sh"
-echo "   ollama pull llama3.2"
-echo ""
-echo "7. Instalar extensão do navegador:"
+echo "5. Instalar extensão do navegador:"
 echo "   - Firefox: about:debugging > This Firefox > Load Temporary Add-on"
 echo "   - Chrome: chrome://extensions > Developer mode > Load unpacked"
 echo "   - Pasta: $INSTALL_DIR/browser-extension"
 echo ""
-echo "8. Reiniciar terminal para ativar hook de comandos"
-echo ""
-echo "9. Gerar resumo manualmente:"
-echo "   $INSTALL_DIR/generate-summary.sh"
+echo "6. Reiniciar terminal para ativar hook de comandos"
 echo ""
 echo -e "${YELLOW}📁 Arquivos de configuração: $CONFIG_DIR${NC}"
 echo -e "${YELLOW}📊 Banco de dados: $CONFIG_DIR/activity.db${NC}"
-echo -e "${YELLOW}📝 Resumos salvos: $CONFIG_DIR/summary_*.md${NC}"
-echo ""
-echo -e "${RED}⚠️  IMPORTANTE: Este sistema captura texto digitado.${NC}"
-echo -e "${RED}   Use apenas com consentimento explícito do usuário!${NC}"
 echo ""

@@ -94,7 +94,7 @@ def stats():
         total_time += dur
         by_type[typ] = by_type.get(typ, 0) + dur
         
-        if typ in ["window", "website", "whatsapp", "telegram", "facebook", "twitter", "youtube"]:
+        if typ in ["window", "website"]:
             by_title[title] = by_title.get(title, 0) + dur
     
     # Top 10 atividades
@@ -105,36 +105,6 @@ def stats():
         "by_type": by_type,
         "top_activities": [{"title": t, "seconds": s} for t, s in top_activities]
     })
-
-@app.route("/api/summary")
-def daily_summary():
-    """Gera resumo inteligente do dia usando IA"""
-    try:
-        from ai_summarizer import ActivitySummarizer
-        
-        use_ollama = request.args.get("ollama", "true").lower() == "true"
-        summarizer = ActivitySummarizer(use_ollama=use_ollama)
-        summary = summarizer.generate_daily_summary()
-        
-        return summary, 200, {"Content-Type": "text/markdown; charset=utf-8"}
-    except Exception as e:
-        logging.error(f"Error generating summary: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/categories")
-def categories():
-    """Retorna atividades categorizadas"""
-    try:
-        from ai_summarizer import ActivitySummarizer
-        
-        summarizer = ActivitySummarizer()
-        activities = summarizer.get_daily_activities()
-        categories = summarizer.categorize_activities(activities)
-        
-        return jsonify(categories)
-    except Exception as e:
-        logging.error(f"Error getting categories: {e}")
-        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     logging.info("Starting Activity Tracker API on port 5001")
